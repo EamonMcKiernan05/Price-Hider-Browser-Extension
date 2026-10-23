@@ -75,8 +75,7 @@ percentage is the number that matters:
 | Local test page | 13 | 100% | 0 |
 
 Ratings, review counts, battery life, sizes, delivery text and discount badges
-stay sharp on all of them. **Temu could not be tested** — it serves a
-slide-to-complete captcha to automated browsers. Try it by hand.
+stay sharp on all of them.
 
 ![Argos with prices inside sentences masked](docs/argos.png)
 
