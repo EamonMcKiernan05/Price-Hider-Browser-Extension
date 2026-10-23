@@ -61,21 +61,31 @@ be masked.
 
 ## Real-site results
 
-Measured, not guessed — each figure comes from a mask/unmask assertion run
-against the live site with the extension loaded, in Chrome 155 and Brave 155.
-Price counts move between loads because these pages lazy-render, so the
-percentage is the number that matters:
+Measured, not guessed. The counts come from a mask/unmask assertion run against
+the live site, and every run is backed by a screenshot I actually looked at —
+a DOM count on its own lies (see the notes below). Price counts move between
+loads because these pages lazy-render, so the percentage is the number that
+matters.
 
-| Site | Prices found | Masked | Readable prices left |
-|---|---|---|---|
-| Amazon UK | 217–239 | 100% | 0 |
-| Argos | 264 | 100% | 0 |
-| eBay UK | 142 | 100% | 0 |
-| Sports Direct | 97 | 100% | 0 |
-| Local test page | 13 | 100% | 0 |
+| Site | Prices masked | Readable prices left |
+|---|---|---|
+| Amazon UK | 100% (183–239 per load) | 0 |
+| Argos | 100% (264) | 0 |
+| eBay UK | 100% (142–146) | 0 |
+| Sports Direct | 100% (92–97) | 0 |
+| AliExpress | 100% (full grid, by inspection) | 0 |
+| Local test page | 100% (11) | 0 |
 
-Ratings, review counts, battery life, sizes, delivery text and discount badges
-stay sharp on all of them.
+Ratings, review counts, battery life, sizes, delivery text, "sold" counts and
+discount badges stay sharp on all of them.
+
+Two bugs this table hid at first, both now fixed:
+
+- AliExpress emits a **fullwidth pound sign** (`￡`, U+FFE1) rather than `£`.
+  Identical on screen, invisible to an ASCII character class — every item price
+  was skipped while the offer badges (plain ASCII) got masked.
+- Temu and other discount shops write sub-£1 prices as **`87p`**, with no
+  currency symbol at all.
 
 ![Argos with prices inside sentences masked](docs/argos.png)
 
@@ -95,8 +105,10 @@ paints. It works in three stages:
    React-rendered grids and infinite scroll get masked as they appear.
 
 A number only counts as a price if it carries a currency symbol or code
-(`£129.00`, `$249.99`, `GBP 349.00`). That's why "4.6 stars", "500ml",
-"2–3 weeks" and "27-inch" pass through untouched.
+(`£129.00`, `$249.99`, `GBP 349.00`) or is written as pence (`87p`). That's why
+"4.6 stars", "500ml", "2–3 weeks" and "27-inch" pass through untouched.
+
+![AliExpress with every card price masked](docs/aliexpress.png)
 
 ## Known limits
 

@@ -43,23 +43,57 @@
   // numbers, quantities, "4.5 stars", "2.5kg", "£" alone etc.
   // Require a currency symbol/code AND decimals, or a symbol with a
   // plausible magnitude.
-  const RE_CURRENCY_PREFIX = /(?:^|[\s(])([£$€¥])\s?\d[\d,.]*/;
-  const RE_CURRENCY_SUFFIX = /\d[\d,.]*\s?(?:£|€|\$|USD|GBP|EUR|p\b|pp\b)/i;
+  // ￡ ＄ ￥ are the FULLWIDTH forms. AliExpress emits U+FFE1 for the pound,
+  // which looks identical on screen and defeats an ASCII-only class.
+  const RE_CURRENCY_PREFIX = /(?:^|[\s(])([£$€¥₹￡＄￥])\s?\d[\d,.]*/;
+  const RE_CURRENCY_SUFFIX =
+    /\d[\d,.]*\s?(?:[£€$¥₹￡＄￥]|USD|GBP|EUR|p\b|pp\b)/i;
   const RE_CODE_PREFIX = /(?:^|[\s(])(?:GBP|USD|EUR|CAD|AUD)\s?\d/i;
 
   // A price token anywhere inside a run of text. Used to mask just the number
   // in "Free delivery from £4.95" without blurring the sentence.
+  // "87p" and "99p" are pence prices with no symbol at all (Temu, UK shops).
   // Deliberately NOT global: a /g/ regex used with .test() keeps lastIndex
   // state between calls and starts returning false. maskPriceTokens builds its
   // own global copy per call.
   const RE_PRICE_TOKEN =
-    /(?<![\w£$€¥])(?:[£$€¥]\s?\d{1,5}(?:,\d{3})*(?:\.\d{1,2})?|\d{1,5}(?:,\d{3})*(?:\.\d{1,2})?\s?(?:GBP|USD|EUR))/i;
+    /(?<![\w£$€¥₹￡＄￥])(?:[£$€¥₹￡＄￥]\s?\d{1,5}(?:,\d{3})*(?:\.\d{1,2})?|\d{1,5}(?:,\d{3})*(?:\.\d{1,2})?\s?(?:GBP|USD|EUR)|\d{1,4}p(?!\w))/i;
 
   // A whole string that is nothing but a price. Used for compound widgets
   // where the currency symbol and the digits live in separate spans
   // (Amazon does this: £ / 21 / . / 50), so no single text node matches.
   const RE_WHOLE_PRICE =
-    /^(?:[£$€¥]\s?\d{1,5}(?:,\d{3})*(?:\.\d{1,2})?|\d{1,5}(?:,\d{3})*(?:\.\d{1,2})?\s?(?:[£$€¥]|GBP|USD|EUR))$/i;
+    /^(?:[£$€¥₹￡＄￥]\s?\d{1,5}(?:,\d{3})*(?:\.\d{1,2})?|\d{1,5}(?:,\d{3})*(?:\.\d{1,2})?\s?(?:[£$€¥₹￡＄￥]|GBP|USD|EUR)|\d{1,4}p)$/i;
+
+  // True when the string is nothing but one or more prices - no prose, no
+  // labels. Shops commonly put the current and struck-through old price in one
+  // tight widget ("£7.20£16.73"), which is not a single price but is still
+  // entirely price.
+  // Consumes from the start rather than scanning, because RE_PRICE_TOKEN's
+  // lookbehind rejects a second price that directly follows the first
+  // ("...20£16.73" - the £ is preceded by a digit).
+  const IS_ONLY_PRICE_RE =
+    /(?:[£$€¥₹￡＄￥]\s?\d{1,5}(?:,\d{3})*(?:\.\d{1,2})?|\d{1,5}(?:,\d{3})*(?:\.\d{1,2})?\s?(?:GBP|USD|EUR)|\d{1,4}p(?!\w))/i;
+
+  const isOnlyPrices = (s) => {
+    if (!s || s.length > 28) return false;
+    let rest = s;
+    let n = 0;
+    while (rest.length && n < 5) {
+      const m = rest.match(IS_ONLY_PRICE_RE);
+      if (!m || m.index !== 0) return false;
+      rest = rest.slice(m[0].length);
+      n++;
+    }
+    return n > 0 && rest.length === 0;
+  };
+
+  // Widgets often wrap the number in a label ("Was £16.73", "£7.20RRP"). Strip
+  // the label words, then ask whether what's left is nothing but prices.
+  // Discount percentages are deliberately NOT stripped, so a widget that also
+  // carries "-50%" is left for the token pass to handle precisely.
+  const stripPriceLabels = (s) =>
+    s.replace(/\b(?:was|now|rrp|only|from|each|save|off)\b:?/gi, "");
 
   // Collapse whitespace and strip an exact repeated copy. Amazon renders each
   // price twice - once in a visually-hidden .a-offscreen span and once as
@@ -117,18 +151,46 @@
     const els = root.querySelectorAll("span,div,strong,b,em,td,li,p,a");
     for (const el of els) {
       if (el.childElementCount === 0 || el.childElementCount > 8) continue;
-      const t = el.textContent || "";
+      // Strip whitespace before the length check: markup is indented, so raw
+      // textContent runs far longer than the price it contains and a raw
+      // prefilter silently rejects valid widgets.
+      const t = (el.textContent || "").replace(/\s+/g, "");
       if (t.length > 26) continue;                  // cheap prefilter
       if (shouldSkipElement(el)) continue;
       const u = normalisePriceText(t);
-      if (u.length < 2 || u.length > 15) continue;
-      if (!RE_WHOLE_PRICE.test(u)) continue;
+      if (u.length < 2 || u.length > 24) continue;
+      // One price, nothing but prices (current + struck old price), or the
+      // same with a label word mixed in ("Was £16.73").
+      if (
+        !RE_WHOLE_PRICE.test(u) &&
+        !isOnlyPrices(u) &&
+        !isOnlyPrices(stripPriceLabels(u))
+      ) {
+        continue;
+      }
       // Tight box only - a price widget, not a card that contains one.
       // A width of 0 means the widget is hidden right now (off-screen carousel,
       // collapsed panel). Do not skip it: it may be revealed later and nothing
       // would rescan it.
       const w = el.getBoundingClientRect().width;
       if (w > 240) continue;
+
+      // A wrapper whose single leaf child already holds the whole price needs
+      // no box mask: the token pass wraps just that text, which is tighter.
+      // Amazon's .a-price is deliberately NOT skipped - it has two children
+      // (a hidden copy plus the visible fragments), and masking the text of the
+      // hidden copy would leave the visible price readable.
+      if (el.childElementCount === 1) {
+        const only = el.firstElementChild;
+        if (
+          only &&
+          only.childElementCount === 0 &&
+          (only.textContent || "").replace(/\s+/g, "") === u
+        ) {
+          continue;
+        }
+      }
+
       cands.push(el);
     }
     // Deepest first: an inner £21.50 beats an outer price range.
