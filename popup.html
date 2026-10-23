@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Price Hider</title>
+<style>
+  :root {
+    --bg: #14141a;
+    --panel: #1d1d25;
+    --line: #2e2e3a;
+    --text: #eceded;
+    --muted: #9494a3;
+    --accent: #4ade80;
+    --accent-dim: #226b3e;
+    --warn: #f5a524;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    width: 300px;
+    font: 13px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+  }
+  header {
+    padding: 13px 15px 11px;
+    border-bottom: 1px solid var(--line);
+    display: flex;
+    align-items: center;
+    gap: 9px;
+  }
+  .dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--muted);
+    flex: none;
+    transition: background 150ms;
+  }
+  .dot.on { background: var(--accent); box-shadow: 0 0 0 3px rgba(74, 222, 128, .15); }
+  h1 { font-size: 13px; margin: 0; font-weight: 600; letter-spacing: .01em; }
+  .status { margin-left: auto; font-size: 11px; color: var(--muted); }
+  section { padding: 13px 15px; }
+  .row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 7px 0;
+  }
+  .row + .row { border-top: 1px solid var(--line); }
+  .label { display: flex; flex-direction: column; gap: 1px; }
+  .label small { color: var(--muted); font-size: 11px; }
+  /* switch */
+  .switch { position: relative; width: 36px; height: 20px; flex: none; }
+  .switch input { opacity: 0; width: 0; height: 0; position: absolute; }
+  .slider {
+    position: absolute; inset: 0; cursor: pointer;
+    background: #33333f; border-radius: 999px; transition: background 150ms;
+  }
+  .slider::before {
+    content: ""; position: absolute; height: 14px; width: 14px;
+    left: 3px; top: 3px; background: #fff; border-radius: 50%;
+    transition: transform 150ms;
+  }
+  .switch input:checked + .slider { background: var(--accent-dim); }
+  .switch input:checked + .slider::before { transform: translateX(16px); background: var(--accent); }
+  .switch input:focus-visible + .slider { outline: 2px solid var(--accent); outline-offset: 2px; }
+  /* segmented */
+  .seg { display: flex; background: var(--panel); border: 1px solid var(--line); border-radius: 7px; padding: 2px; }
+  .seg button {
+    border: 0; background: transparent; color: var(--muted);
+    font: inherit; font-size: 11px; padding: 4px 10px; border-radius: 5px; cursor: pointer;
+  }
+  .seg button[aria-pressed="true"] { background: #33333f; color: var(--text); }
+  .stats {
+    display: flex; gap: 10px; padding: 11px 15px;
+    border-top: 1px solid var(--line); border-bottom: 1px solid var(--line);
+    background: var(--panel);
+  }
+  .stat { flex: 1; }
+  .stat b { display: block; font-size: 17px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .stat small { color: var(--muted); font-size: 10.5px; }
+  footer { padding: 10px 15px 13px; }
+  .hint { color: var(--muted); font-size: 11px; margin: 0 0 9px; }
+  button.ghost {
+    width: 100%; padding: 7px; font: inherit; font-size: 12px; cursor: pointer;
+    background: var(--panel); color: var(--text);
+    border: 1px solid var(--line); border-radius: 7px;
+  }
+  button.ghost:hover { border-color: #3d3d4c; }
+  #extra {
+    width: 100%; margin-top: 8px; padding: 6px 8px; font: inherit; font-size: 11px;
+    background: var(--panel); border: 1px solid var(--line); border-radius: 6px; color: var(--text);
+  }
+  #extra::placeholder { color: #6a6a7a; }
+  .warnline { color: var(--warn); font-size: 11px; margin: 8px 0 0; display: none; }
+  .warnline.show { display: block; }
+</style>
+</head>
+<body>
+  <header>
+    <span class="dot" id="dot"></span>
+    <h1>Price Hider</h1>
+    <span class="status" id="site">—</span>
+  </header>
+
+  <section>
+    <div class="row">
+      <div class="label">
+        <span>Blocking on this site</span>
+        <small id="stateText">Checking…</small>
+      </div>
+      <label class="switch">
+        <input type="checkbox" id="enabled" />
+        <span class="slider"></span>
+      </label>
+    </div>
+
+    <div class="row">
+      <div class="label"><span>Style</span></div>
+      <div class="seg" role="group" aria-label="Mask style">
+        <button id="modeBlur" aria-pressed="true">Blur</button>
+        <button id="modeHide" aria-pressed="false">Hide</button>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="label">
+        <span>Shift to peek</span>
+        <small>Hold Shift to reveal all prices</small>
+      </div>
+      <label class="switch">
+        <input type="checkbox" id="peek" />
+        <span class="slider"></span>
+      </label>
+    </div>
+
+    <div class="row">
+      <div class="label">
+        <span>Shopping sites only</span>
+        <small>Off = every website</small>
+      </div>
+      <label class="switch">
+        <input type="checkbox" id="siteOnly" />
+        <span class="slider"></span>
+      </label>
+    </div>
+  </section>
+
+  <div class="stats">
+    <div class="stat"><b id="count">0</b><small>prices masked here</small></div>
+    <div class="stat"><b id="selectorCount">0</b><small>custom selectors</small></div>
+  </div>
+
+  <footer>
+    <p class="hint" id="hint">Reload the tab after enabling on a site you already had open.</p>
+    <input id="extra" type="text" placeholder="Extra CSS selector, e.g. .product-price" />
+    <p class="warnline" id="warn">That selector looks invalid — ignored.</p>
+    <p>&nbsp;</p>
+    <button class="ghost" id="rescan">Rescan this page</button>
+  </footer>
+
+  <script src="popup.js"></script>
+</body>
+</html>

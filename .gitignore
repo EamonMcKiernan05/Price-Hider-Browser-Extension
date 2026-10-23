@@ -1,0 +1,9 @@
+# build output
+*.tar.gz
+*.zip
+
+# editor / OS junk
+.DS_Store
+Thumbs.db
+*.swp
+__pycache__/

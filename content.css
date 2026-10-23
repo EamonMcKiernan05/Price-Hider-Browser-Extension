@@ -1,0 +1,73 @@
+/* Price Blocker - injected styles.
+   We never remove the element from the DOM, we only mask it visually.
+   That keeps layout identical, so you see the page as it really looks. */
+
+.pb-hidden-price {
+  /* Only the glyphs blur - keeps wide table cells and price rows tidy.
+     No transition here: an interrupted/occluded transition leaves the filter
+     at blur(0px) and the price fully readable. Mask instantly, always. */
+  filter: blur(6px) !important;
+  cursor: default !important;
+  user-select: none !important;
+  border-radius: 3px;
+  /* faint skeleton so a masked price still reads as "something here" */
+  background-image: linear-gradient(
+    90deg,
+    rgba(128, 128, 128, 0.16),
+    rgba(128, 128, 128, 0.10)
+  ) !important;
+  /* clamp the skeleton to the text, not the full cell width */
+  box-decoration-break: clone !important;
+  -webkit-box-decoration-break: clone !important;
+}
+
+/* Inline masks (text nodes wrapped in a span) must hug the text - the host
+   page's own block/flex rules would otherwise stretch them. Box masks (split
+   price widgets like Amazon's) must keep their host display so layout holds. */
+.pb-hidden-price.pb-inline {
+  display: inline !important;
+}
+
+.pb-hidden-price.pb-revealed {
+  filter: none !important;
+  background-image: none !important;
+  user-select: auto !important;
+  transition: filter 120ms ease-out;
+}
+
+/* Optional: full hide mode puts a grey bar in place of the price */
+.pb-mode-hide .pb-hidden-price {
+  color: transparent !important;
+  text-shadow: none !important;
+  background-image: linear-gradient(
+    90deg,
+    rgba(128, 128, 128, 0.35),
+    rgba(128, 128, 128, 0.35)
+  ) !important;
+  background-size: 100% 0.9em !important;
+  background-repeat: no-repeat !important;
+  background-position: 0 50% !important;
+}
+
+/* hover-to-peek badge */
+.pb-peek-badge {
+  position: fixed;
+  z-index: 2147483647;
+  bottom: 18px;
+  right: 18px;
+  font: 12px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: #1b1b1f;
+  color: #f2f2f3;
+  padding: 7px 11px;
+  border-radius: 7px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 140ms ease-out, transform 140ms ease-out;
+}
+
+.pb-peek-badge.pb-show {
+  opacity: 1;
+  transform: translateY(0);
+}

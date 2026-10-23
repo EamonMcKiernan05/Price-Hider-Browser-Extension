@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Test Shop — Price Hider Demo</title>
+<style>
+  :root {
+    --ink: #16161a;
+    --muted: #6a6a78;
+    --line: #e4e4ea;
+    --bg: #fbfbfc;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font: 15px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  .wrap { max-width: 1040px; margin: 0 auto; padding: 0 20px 60px; }
+  header {
+    border-bottom: 1px solid var(--line); background: #fff; margin-bottom: 32px;
+  }
+  .bar {
+    max-width: 1040px; margin: 0 auto; padding: 15px 20px;
+    display: flex; align-items: center; gap: 18px;
+  }
+  .brand { font-weight: 700; letter-spacing: -.02em; font-size: 17px; }
+  nav { display: flex; gap: 16px; margin-left: auto; font-size: 14px; color: var(--muted); }
+  h1 { font-size: 25px; letter-spacing: -.02em; margin: 0 0 6px; }
+  .lede { color: var(--muted); margin: 0 0 28px; max-width: 60ch; }
+  .grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(215px, 1fr));
+    gap: 18px;
+  }
+  .card {
+    background: #fff; border: 1px solid var(--line); border-radius: 12px;
+    padding: 14px; display: flex; flex-direction: column; gap: 9px;
+  }
+  .thumb {
+    height: 120px; border-radius: 8px;
+    background: linear-gradient(135deg, #ececf2, #f7f7fa);
+    display: grid; place-items: center; font-size: 34px;
+  }
+  .name { font-size: 14px; font-weight: 600; margin: 0; line-height: 1.35; }
+  .sub { font-size: 12.5px; color: var(--muted); margin: 0; }
+  .price-row { display: flex; align-items: baseline; gap: 8px; margin-top: auto; }
+  .price { font-size: 17px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .was { font-size: 12.5px; color: var(--muted); text-decoration: line-through; }
+  .stars { font-size: 12px; color: var(--muted); }
+  .btn {
+    margin-top: 4px; padding: 8px; border-radius: 8px; border: 1px solid var(--line);
+    background: #fff; font: inherit; font-size: 13px; cursor: pointer;
+  }
+  footer { margin-top: 40px; font-size: 12.5px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 16px; }
+  .delivery { font-size: 12px; color: var(--muted); }
+  .panel {
+    margin-top: 34px; background: #fff; border: 1px solid var(--line);
+    border-radius: 12px; padding: 18px;
+  }
+  .panel h2 { font-size: 15px; margin: 0 0 10px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  td { padding: 8px 6px; border-bottom: 1px solid var(--line); }
+  td:last-child { text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; }
+  .total td { border-bottom: 0; font-weight: 700; }
+</style>
+</head>
+<body>
+<header>
+  <div class="bar">
+    <span class="brand">Nettle &amp; Co.</span>
+    <nav><span>New in</span><span>Home</span><span>Tech</span><span>Sale</span></nav>
+  </div>
+</header>
+
+<div class="wrap">
+  <h1>Today's picks</h1>
+  <p class="lede">
+    A fake shop for testing. Every price on this page should be masked when the
+    extension is on. Hold <strong>Shift</strong> to reveal them all, or hover a single price.
+  </p>
+
+  <div class="grid">
+    <article class="card">
+      <div class="thumb">🎧</div>
+      <h3 class="name">Over-ear headphones, matte black</h3>
+      <p class="sub">Wireless · 40h battery</p>
+      <div class="price-row">
+        <span class="price">£129.00</span>
+        <span class="was">£179.00</span>
+      </div>
+      <p class="stars">★ 4.6 (812)</p>
+      <p class="delivery">Free delivery</p>
+      <button class="btn">Add to basket</button>
+    </article>
+
+    <article class="card">
+      <div class="thumb">⌚</div>
+      <h3 class="name">Fitness watch, series 4</h3>
+      <p class="sub">GPS · Heart rate</p>
+      <div class="price-row">
+        <span class="price">$249.99</span>
+      </div>
+      <p class="stars">★ 4.4 (355)</p>
+      <p class="delivery">Next day</p>
+      <button class="btn">Add to basket</button>
+    </article>
+
+    <article class="card">
+      <div class="thumb">🪑</div>
+      <h3 class="name">Oak dining chair, pair</h3>
+      <p class="sub">Solid oak · 2 pack</p>
+      <div class="price-row">
+        <span class="price">€189.00</span>
+      </div>
+      <p class="stars">★ 4.8 (96)</p>
+      <p class="delivery">2–3 weeks</p>
+      <button class="btn">Add to basket</button>
+    </article>
+
+    <article class="card">
+      <div class="thumb">☕</div>
+      <h3 class="name">Burr coffee grinder</h3>
+      <p class="sub">38 settings</p>
+      <div class="price-row">
+        <span class="price">£74.50</span>
+        <span class="was">£89.00</span>
+      </div>
+      <p class="stars">★ 4.3 (1,204)</p>
+      <p class="delivery">Free delivery</p>
+      <button class="btn">Add to basket</button>
+    </article>
+
+    <article class="card">
+      <div class="thumb">🧴</div>
+      <h3 class="name">Body wash, 500ml</h3>
+      <p class="sub">Sensitive skin</p>
+      <div class="price-row">
+        <span class="price">£6.49</span>
+      </div>
+      <p class="stars">★ 4.7 (2,310)</p>
+      <p class="delivery">In stock</p>
+      <button class="btn">Add to basket</button>
+    </article>
+
+    <article class="card">
+      <div class="thumb">🖥️</div>
+      <h3 class="name">27-inch 4K monitor</h3>
+      <p class="sub">IPS · 60Hz · USB-C</p>
+      <div class="price-row">
+        <span class="price">GBP 349.00</span>
+      </div>
+      <p class="stars">★ 4.5 (188)</p>
+      <p class="delivery">Free delivery</p>
+      <button class="btn">Add to basket</button>
+    </article>
+  </div>
+
+  <div class="panel">
+    <h2>Basket</h2>
+    <table>
+      <tbody>
+        <tr><td>Over-ear headphones</td><td>£129.00</td></tr>
+        <tr><td>Burr coffee grinder</td><td>£74.50</td></tr>
+        <tr><td>Body wash, 500ml</td><td>£6.49</td></tr>
+        <tr><td>Delivery</td><td>£0.00</td></tr>
+        <tr class="total"><td>Total</td><td>£209.99</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <footer>
+    Things that should <em>not</em> be masked on this page: "4.6", "812",
+    "40h", "500ml", "2–3 weeks", "27-inch", "series 4", "38 settings"
+    and "2 pack". If any of those get blurred, the matching rules are too greedy.
+  </footer>
+</div>
+</body>
+</html>
